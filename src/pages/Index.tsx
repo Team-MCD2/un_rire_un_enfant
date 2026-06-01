@@ -397,7 +397,7 @@ const Index = () => {
       {/* FAB */}
       <button
         onClick={() => setShowForm(true)}
-        className="fixed right-4 bottom-24 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+        className="fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
       >
         <Plus size={24} />
       </button>
