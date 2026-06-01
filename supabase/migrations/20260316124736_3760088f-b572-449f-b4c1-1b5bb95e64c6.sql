@@ -1,0 +1,5 @@
+
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS phone text DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS nickname text DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS show_online boolean NOT NULL DEFAULT true;

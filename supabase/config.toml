@@ -1,0 +1,13 @@
+project_id = "gwvhxtnzarjieoxcjvmf"
+
+[functions.chat]
+verify_jwt = false
+
+[functions.admin-users]
+verify_jwt = false
+
+[functions.notify-distribution]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false

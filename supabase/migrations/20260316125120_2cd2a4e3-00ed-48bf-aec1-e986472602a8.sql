@@ -1,0 +1,1 @@
+UPDATE public.chat_rooms SET name = 'Bénévole' WHERE slug = 'intime';
