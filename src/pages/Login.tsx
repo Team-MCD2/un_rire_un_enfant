@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, Mail } from "lucide-react";
 import appIcon from "@/assets/logo.png";
 
 type MemberType = "benevole" | "beneficiaire" | "both";
@@ -25,6 +25,7 @@ const Login = () => {
   const [notifStories, setNotifStories] = useState(true);
   const [notifDistributions, setNotifDistributions] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
 
   if (user) {
     navigate("/");
@@ -80,7 +81,9 @@ const Login = () => {
           },
         });
         if (error) throw error;
-        toast({ title: "Inscription réussie", description: "Vérifiez votre email pour confirmer votre compte." });
+        setIsRegister(false);
+        setPassword("");
+        setShowConfirmationPopup(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: resolvedEmail, password });
         if (error) throw error;
@@ -242,6 +245,31 @@ const Login = () => {
           )}
         </p>
       </motion.div>
+
+      {/* Popup de confirmation d'email */}
+      {showConfirmationPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card w-full max-w-sm rounded-2xl p-6 text-center shadow-2xl space-y-4 relative"
+          >
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Mail className="text-green-600 w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Vérifiez vos e-mails !</h2>
+            <p className="text-sm text-muted-foreground">
+              Inscription réussie. Vous avez reçu un mail de confirmation. Veuillez cliquer sur le lien qu'il contient pour valider votre compte avant de pouvoir vous connecter.
+            </p>
+            <button 
+              onClick={() => setShowConfirmationPopup(false)}
+              className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl mt-2 hover:opacity-90 transition-opacity"
+            >
+              J'ai compris
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
