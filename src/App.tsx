@@ -23,6 +23,7 @@ import Authorizations from "./pages/Authorizations";
 import Legal from "./pages/Legal";
 import InstallPrompt from "@/components/InstallPrompt";
 import CookieBanner from "@/components/CookieBanner";
+import ReloadPrompt from "@/components/ReloadPrompt";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
           <ChatBotBubble />
           <InstallPrompt />
           <CookieBanner />
+          <ReloadPrompt />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

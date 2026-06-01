@@ -1,0 +1,8 @@
+{
+  "type": "distribution",
+  "title": "Test de Distribution",
+  "description": "Ceci est un test depuis la console",
+  "event_date": "2026-06-10",
+  "event_time": "14:00",
+  "location": "Paris"
+}
