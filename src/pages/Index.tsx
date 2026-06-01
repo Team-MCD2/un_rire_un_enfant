@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { sendLocalNotification, requestNotificationPermission } from "@/lib/notifications";
 import PageHeader from "@/components/PageHeader";
 import ActivityCard from "@/components/ActivityCard";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import heroImg from "@/assets/hero-activities.jpg";
 import artImg from "@/assets/activity-art.jpg";
 import studyImg from "@/assets/activity-study.jpg";
@@ -49,6 +50,8 @@ const Index = () => {
   const [myProposals, setMyProposals] = useState<Proposal[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(false);
   const [approvedActivities, setApprovedActivities] = useState<Proposal[]>([]);
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   // Fetch approved activities
   useEffect(() => {
@@ -243,11 +246,74 @@ const Index = () => {
       {/* Activities list */}
       {activeTab === "activities" && (
         <main className="px-4 py-4 space-y-4 max-w-lg mx-auto">
+          {approvedActivities.length > 0 && (
+            <div className="flex justify-end mb-2">
+              <div className="bg-secondary p-1 rounded-xl flex text-sm font-medium">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Liste
+                </button>
+                <button
+                  onClick={() => setViewMode("calendar")}
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${viewMode === "calendar" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Calendrier
+                </button>
+              </div>
+            </div>
+          )}
+
           {approvedActivities.length === 0 ? (
             <div className="text-center py-12">
               <Calendar size={40} className="text-muted-foreground mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Aucune activité pour le moment.</p>
               <p className="text-xs text-muted-foreground mt-1">Proposez-en une avec le bouton +</p>
+            </div>
+          ) : viewMode === "calendar" ? (
+            <div className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center">
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className="rounded-md"
+                modifiers={{
+                  hasActivity: approvedActivities.map(a => a.proposed_date ? new Date(a.proposed_date) : new Date(0)),
+                }}
+                modifiersClassNames={{
+                  hasActivity: "font-bold text-primary underline decoration-2 underline-offset-4",
+                }}
+              />
+              <div className="mt-6 w-full space-y-3">
+                <h3 className="font-semibold text-sm mb-2">
+                  Activités le {selectedDate ? selectedDate.toLocaleDateString("fr-FR") : "..."}
+                </h3>
+                {approvedActivities
+                  .filter(a => {
+                    if (!selectedDate || !a.proposed_date) return false;
+                    const d1 = new Date(a.proposed_date);
+                    return d1.getDate() === selectedDate.getDate() &&
+                           d1.getMonth() === selectedDate.getMonth() &&
+                           d1.getFullYear() === selectedDate.getFullYear();
+                  })
+                  .map((activity, i) => (
+                    <div key={activity.id} className="bg-secondary/50 p-3 rounded-xl">
+                      <p className="font-semibold text-sm">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">{activity.location || activity.city}</p>
+                    </div>
+                  ))
+                }
+                {selectedDate && approvedActivities.filter(a => {
+                    if (!a.proposed_date) return false;
+                    const d1 = new Date(a.proposed_date);
+                    return d1.getDate() === selectedDate.getDate() &&
+                           d1.getMonth() === selectedDate.getMonth() &&
+                           d1.getFullYear() === selectedDate.getFullYear();
+                  }).length === 0 && (
+                  <p className="text-xs text-muted-foreground italic text-center py-4">Aucune activité ce jour-là.</p>
+                )}
+              </div>
             </div>
           ) : (
             approvedActivities.map((activity, i) => (

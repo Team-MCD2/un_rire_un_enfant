@@ -1,9 +1,4 @@
 
--- Grant admin role to hterbah31100@gmail.com
-INSERT INTO public.user_roles (user_id, role)
-VALUES ('53e44ec2-341f-4ba8-b9aa-dccc7f598e83', 'admin')
-ON CONFLICT (user_id, role) DO NOTHING;
-
 -- Create private messages table
 CREATE TABLE public.private_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, Mail, Lock, LogOut, Bell, ShieldCheck, Phone, User, Eye, Save, Pencil, Users } from "lucide-react";
+import { ArrowLeft, Camera, Mail, Lock, LogOut, Bell, ShieldCheck, Phone, User, Eye, Save, Pencil, Users, Award, Medal, Star, Crown, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -24,6 +24,7 @@ const Profile = () => {
   const [showOnline, setShowOnline] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [stats, setStats] = useState({ activities: 0, distributions: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,7 +48,18 @@ const Profile = () => {
         .maybeSingle();
       setIsAdmin(!!data);
     };
+
+    const fetchStats = async () => {
+      if (!user) return;
+      const [{ count: actCount }, { count: distCount }] = await Promise.all([
+        supabase.from("activity_proposals").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("distribution_registrations").select("*", { count: "exact", head: true }).eq("user_id", user.id)
+      ]);
+      setStats({ activities: actCount || 0, distributions: distCount || 0 });
+    };
+
     checkAdmin();
+    fetchStats();
   }, [user]);
 
   const handleSave = async () => {
@@ -162,8 +174,59 @@ const Profile = () => {
           </div>
         </motion.div>
 
+        {/* Badges / Gamification */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card border border-border rounded-2xl p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Award size={18} className="text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Mes Badges</h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col items-center justify-center p-3 bg-secondary/50 rounded-xl border border-border min-w-[80px]">
+              <Star size={24} className="text-yellow-500 mb-1" />
+              <span className="text-[10px] font-medium text-center">Membre<br/>Actif</span>
+            </div>
+            
+            {stats.activities > 0 ? (
+              <div className="flex flex-col items-center justify-center p-3 bg-accent/10 rounded-xl border border-accent/20 min-w-[80px]">
+                <Medal size={24} className="text-accent mb-1" />
+                <span className="text-[10px] font-medium text-center text-accent">Initiateur<br/>({stats.activities})</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-3 bg-secondary/20 rounded-xl border border-border/50 min-w-[80px] opacity-40 grayscale">
+                <Medal size={24} className="text-muted-foreground mb-1" />
+                <span className="text-[10px] font-medium text-center text-muted-foreground">Initiateur</span>
+              </div>
+            )}
+
+            {stats.distributions > 0 ? (
+              <div className="flex flex-col items-center justify-center p-3 bg-green-500/10 rounded-xl border border-green-500/20 min-w-[80px]">
+                <Award size={24} className="text-green-500 mb-1" />
+                <span className="text-[10px] font-medium text-center text-green-600">Solidaire<br/>({stats.distributions})</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-3 bg-secondary/20 rounded-xl border border-border/50 min-w-[80px] opacity-40 grayscale">
+                <Award size={24} className="text-muted-foreground mb-1" />
+                <span className="text-[10px] font-medium text-center text-muted-foreground">Solidaire</span>
+              </div>
+            )}
+
+            {stats.activities + stats.distributions >= 10 ? (
+              <div className="flex flex-col items-center justify-center p-3 bg-purple-500/10 rounded-xl border border-purple-500/20 min-w-[80px] relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent" />
+                <Crown size={24} className="text-purple-500 mb-1 relative z-10" />
+                <span className="text-[10px] font-medium text-center text-purple-600 relative z-10">Pilier de<br/>l'asso</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-3 bg-secondary/20 rounded-xl border border-border/50 min-w-[80px] opacity-40 grayscale">
+                <Crown size={24} className="text-muted-foreground mb-1" />
+                <span className="text-[10px] font-medium text-center text-muted-foreground">Pilier (10)</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
         {/* Settings fields */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-4 space-y-4">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card border border-border rounded-2xl p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Informations</h3>
             {!editing ? (
@@ -274,7 +337,7 @@ const Profile = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.3 }}
           className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
@@ -297,7 +360,7 @@ const Profile = () => {
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.4 }}
           onClick={handleEnableNotifications}
           className="w-full py-3 rounded-2xl bg-primary/10 text-primary font-medium text-sm flex items-center justify-center gap-2"
         >
@@ -308,13 +371,23 @@ const Profile = () => {
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.5 }}
             onClick={() => navigate("/admin")}
             className="w-full py-3 rounded-2xl bg-accent text-accent-foreground font-medium text-sm flex items-center justify-center gap-2"
           >
             <ShieldCheck size={16} /> Panneau d'administration
           </motion.button>
         )}
+
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          onClick={() => navigate("/legal")}
+          className="w-full py-3 rounded-2xl bg-secondary/50 text-foreground font-medium text-sm flex items-center justify-center gap-2"
+        >
+          <FileText size={16} className="text-muted-foreground" /> Légal & Confidentialité
+        </motion.button>
 
         <button
           onClick={handleLogout}

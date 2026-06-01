@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Users, KeyRound, Loader2, Search, ShieldCheck, Bot, UserCheck, UserX, Crown, Trash2, Plus, MessageSquare, Send, CalendarCheck, Ban, Pencil, X, Save, ShieldOff, Settings, Link } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Loader2, Search, ShieldCheck, Bot, UserCheck, UserX, Crown, Trash2, Plus, MessageSquare, Send, CalendarCheck, Ban, Pencil, X, Save, ShieldOff, Settings, Link, BarChart } from "lucide-react";
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -60,7 +61,7 @@ interface ActivityProposal {
   user_name?: string;
 }
 
-type AdminTab = "users" | "access" | "bot" | "roles" | "inbox" | "activities" | "settings";
+type AdminTab = "stats" | "users" | "access" | "bot" | "roles" | "inbox" | "activities" | "settings";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<AdminTab>("users");
+  const [activeTab, setActiveTab] = useState<AdminTab>("stats");
 
   // Access requests
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
@@ -503,6 +504,7 @@ const Admin = () => {
   };
 
   const tabs: { id: AdminTab; label: string; icon: React.ReactNode; badge?: number }[] = [
+    { id: "stats", label: "Stats", icon: <BarChart size={16} /> },
     { id: "inbox", label: "Boîte", icon: <MessageSquare size={16} />, badge: inboxUnread },
     { id: "activities", label: "Activités", icon: <CalendarCheck size={16} />, badge: pendingProposals.length },
     { id: "users", label: "Membres", icon: <Users size={16} /> },
@@ -511,6 +513,17 @@ const Admin = () => {
     { id: "roles", label: "Rôles", icon: <Crown size={16} /> },
     { id: "settings", label: "Config", icon: <Settings size={16} /> },
   ];
+
+  // Prepare chart data
+  const activityData = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    proposals.forEach(p => {
+      const d = new Date(p.created_at);
+      const month = d.toLocaleString('fr-FR', { month: 'short' });
+      counts[month] = (counts[month] || 0) + 1;
+    });
+    return Object.keys(counts).map(k => ({ name: k, total: counts[k] }));
+  }, [proposals]);
 
   return (
     <div className="safe-screen bg-background pb-24">
@@ -546,6 +559,44 @@ const Admin = () => {
       </div>
 
       <main className="px-4 py-4 max-w-lg mx-auto space-y-4">
+        {/* Stats tab */}
+        {activeTab === "stats" && (
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Aperçu global</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center justify-center">
+                <Users size={24} className="text-primary mb-2" />
+                <p className="text-2xl font-bold">{users.length}</p>
+                <p className="text-xs text-muted-foreground text-center">Membres inscrits</p>
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center justify-center">
+                <CalendarCheck size={24} className="text-accent mb-2" />
+                <p className="text-2xl font-bold">{proposals.length}</p>
+                <p className="text-xs text-muted-foreground text-center">Activités proposées</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-2xl p-4 mt-4">
+              <h3 className="text-sm font-semibold mb-4 text-center">Propositions par mois</h3>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart data={activityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
+                    <Tooltip 
+                      cursor={{ fill: 'hsl(var(--secondary))' }}
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                    />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Users tab */}
         {activeTab === "users" && (
           <>

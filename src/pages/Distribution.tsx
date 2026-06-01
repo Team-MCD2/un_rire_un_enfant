@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapPin, Calendar, UtensilsCrossed, Users, Plus, X, Trash2, Loader2 } from "lucide-react";
+import { MapPin, Calendar, UtensilsCrossed, Users, Plus, X, Trash2, Loader2, Map as MapIcon, List as ListIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +7,20 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 import distImg from "@/assets/distribution.jpg";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// Fix Leaflet icon
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 interface DistEvent {
   id: string;
@@ -29,6 +43,8 @@ const Distribution = () => {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", date: "", time: "18h00", location: "", meals: "50" });
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [coords, setCoords] = useState<Record<string, [number, number]>>({});
 
   // Check admin
   useEffect(() => {
@@ -58,6 +74,19 @@ const Distribution = () => {
       setRegistrations(counts);
       setMyRegistrations(mine);
       setLoading(false);
+
+      // Fetch coords for map
+      evts?.forEach(async (evt: any) => {
+        try {
+          const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(evt.location)}&count=1&language=fr`);
+          const data = await res.json();
+          if (data.results && data.results.length > 0) {
+            setCoords(prev => ({ ...prev, [evt.id]: [data.results[0].latitude, data.results[0].longitude] }));
+          }
+        } catch {
+          // Silent fallback
+        }
+      });
     };
     fetch();
   }, [user, showForm]);
@@ -160,6 +189,25 @@ const Distribution = () => {
       </div>
 
       <main className="px-4 py-4 space-y-3 max-w-lg mx-auto">
+        {events.length > 0 && (
+          <div className="flex justify-end mb-2">
+            <div className="bg-secondary p-1 rounded-xl flex text-sm font-medium">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${viewMode === "list" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <ListIcon size={14} /> Liste
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${viewMode === "map" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <MapIcon size={14} /> Carte
+              </button>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-primary" /></div>
         ) : events.length === 0 ? (
@@ -167,6 +215,46 @@ const Distribution = () => {
             <UtensilsCrossed size={40} className="text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">Aucune distribution prévue pour le moment.</p>
             {isAdmin && <p className="text-xs text-muted-foreground mt-1">Créez-en une avec le bouton +</p>}
+          </div>
+        ) : viewMode === "map" ? (
+          <div className="h-[400px] rounded-2xl overflow-hidden border border-border shadow-sm z-0 relative">
+            <MapContainer center={[43.2965, 5.3698]} zoom={12} style={{ height: "100%", width: "100%" }}>
+              <TileLayer
+                attribution='&copy; OpenStreetMap'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {events.map((evt) => {
+                const coord = coords[evt.id];
+                if (!coord) return null;
+                const count = registrations[evt.id] || 0;
+                const isFull = count >= evt.meals_available;
+                return (
+                  <Marker key={evt.id} position={coord}>
+                    <Popup className="rounded-xl">
+                      <div className="p-1 min-w-[200px]">
+                        <p className="font-bold text-sm mb-1">{evt.title}</p>
+                        <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><MapPin size={10} /> {evt.location}</p>
+                        <p className="text-xs mb-2">📅 {new Date(evt.event_date).toLocaleDateString("fr-FR")} à {evt.event_time}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                            {evt.meals_available - count} repas
+                          </span>
+                          <button
+                            onClick={() => toggleRegistration(evt.id)}
+                            disabled={isFull && !myRegistrations.has(evt.id)}
+                            className={`px-3 py-1 text-[11px] rounded-md font-bold text-white ${
+                              myRegistrations.has(evt.id) ? "bg-destructive" : isFull ? "bg-muted-foreground cursor-not-allowed" : "bg-primary"
+                            }`}
+                          >
+                            {myRegistrations.has(evt.id) ? "Désinscrire" : isFull ? "Complet" : "M'inscrire"}
+                          </button>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
           </div>
         ) : (
           events.map((evt, i) => {
@@ -231,6 +319,7 @@ const Distribution = () => {
             );
           })
         )}
+
       </main>
 
       {/* Admin FAB */}

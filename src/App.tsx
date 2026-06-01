@@ -20,7 +20,9 @@ import NotFound from "./pages/NotFound";
 import PrivateChat from "./pages/PrivateChat";
 import ContactAdmin from "./pages/ContactAdmin";
 import Authorizations from "./pages/Authorizations";
+import Legal from "./pages/Legal";
 import InstallPrompt from "@/components/InstallPrompt";
+import CookieBanner from "@/components/CookieBanner";
 
 const queryClient = new QueryClient();
 
@@ -45,12 +47,14 @@ const App = () => (
             <Route path="/messages/:recipientId" element={<PrivateChat />} />
             <Route path="/contact" element={<ContactAdmin />} />
             <Route path="/documents" element={<Authorizations />} />
+            <Route path="/legal" element={<Legal />} />
             <Route path="/ideas" element={<Ideas />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <BottomNav />
           <ChatBotBubble />
           <InstallPrompt />
+          <CookieBanner />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
