@@ -153,7 +153,7 @@ const ChatBotBubble = () => {
       {/* Floating bubble */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-20 left-4 z-[60] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        className="fixed bottom-24 left-4 z-[60] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
         aria-label="Ouvrir l'assistant"
       >
         {open ? <X size={22} /> : <Rabbit size={24} />}
@@ -167,7 +167,7 @@ const ChatBotBubble = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className="fixed bottom-36 left-4 z-[60] w-[calc(100vw-2rem)] max-w-sm bg-card rounded-2xl shadow-2xl border border-border flex flex-col overflow-hidden"
+            className="fixed bottom-40 left-4 z-[60] w-[calc(100vw-2rem)] max-w-sm bg-card rounded-2xl shadow-2xl border border-border flex flex-col overflow-hidden"
             style={{ maxHeight: "60vh" }}
           >
             {/* Header */}
