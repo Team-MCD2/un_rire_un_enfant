@@ -78,10 +78,13 @@ const Distribution = () => {
       // Fetch coords for map
       evts?.forEach(async (evt: any) => {
         try {
-          const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(evt.location)}&count=1&language=fr`);
+          // Utilisation de Nominatim (OpenStreetMap) pour une précision à la rue près
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(evt.location)}&limit=1`, {
+            headers: { "Accept-Language": "fr" }
+          });
           const data = await res.json();
-          if (data.results && data.results.length > 0) {
-            setCoords(prev => ({ ...prev, [evt.id]: [data.results[0].latitude, data.results[0].longitude] }));
+          if (data && data.length > 0) {
+            setCoords(prev => ({ ...prev, [evt.id]: [parseFloat(data[0].lat), parseFloat(data[0].lon)] }));
           }
         } catch {
           // Silent fallback
@@ -218,7 +221,7 @@ const Distribution = () => {
           </div>
         ) : viewMode === "map" ? (
           <div className="h-[400px] rounded-2xl overflow-hidden border border-border shadow-sm z-0 relative">
-            <MapContainer center={[43.2965, 5.3698]} zoom={12} style={{ height: "100%", width: "100%" }}>
+            <MapContainer center={[43.2965, 5.3698]} zoom={13} style={{ height: "100%", width: "100%" }}>
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
